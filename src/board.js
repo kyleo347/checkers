@@ -3,28 +3,42 @@ import React, {
 }
 from 'react';
 
+import redpiece from "../img/red.jpg";
+import blackpiece from "../img/black.jpg";
+
 class Square extends Component {
+        static red = -1;
+        static black = 1;
+        static redKing = -2;
+        static blackKing = 2;
+        static invalid = '-';
+        static empty = 0;
+        selectable = false;
     // constructor(value) {
     //     super();
-    //     this.value = value;
-    //     this.red = -1;
-    //     this.black = 1;
-    //     this.redKing = -2;
-    //     this.blackKing = 2;
-    //     this.invalid = '-';
-    //     this.empty = 0;
-    // }
     render() {
+        let className = 'Square';
+        if (this.props.selectable) className += ' selectable';
+        if (this.props.value === Square.invalid){
+           className += ' black'; 
+        }
+        if(this.props.value === Square.red){
+            return(<img src={redpiece} className={className}/>)
+        }
+        if(this.props.value === Square.black){
+            return(<img src={blackpiece} className={className}/>)
+        }
         return (
-            <span>
-                {this.props.value}
-            </span>
+            <div className={className}>
+            </div>
         );
     }
 }
 
 
 class Board extends Component {
+    
+    findMoves
     constructor() {
         super();
         this.data = [];
@@ -35,31 +49,27 @@ class Board extends Component {
                 if ((i + j) % 2 === 0) { //black square
                     row.push(
                         <td key={key}>
-                            <Square value={'-'}></Square>
+                            <Square value={Square.invalid}></Square>
                         </td>
                         );
-                    // row.push('-');
                 }
                 else if (i < 3) { //red piece
                     row.push(
                         <td key={key}>
-                            <Square value={-1}></Square>
+                            <Square value={Square.red}></Square>
                         </td>);
-                    // row.push(-1);
                 }
                 else if (i > 4) { //black piece
                     row.push(
                         <td key={key}>
-                            <Square value={1}></Square>
+                            <Square value={Square.black}></Square>
                         </td>);
-                    // row.push(1);
                 }
                 else { //empty white Square
                     row.push(
                         <td key={key}>
-                            <Square value={0}></Square>
+                            <Square value={Square.empty}></Square>
                         </td>);
-                    // row.push(0);
                 }
             }
             this.data.push(row);
@@ -67,22 +77,16 @@ class Board extends Component {
     }
     render() {
         let rows = [];
-        let rowString = '';
         for (let i = 0; i < this.data.length; i++) {
-            // rowString = '<tr>';
             let row = this.data[i];
             let squareRow = 
             <tr key={i}>
                 {row}
             </tr>;
-            // for (let j = 0; j < row.length; j++) {
-                // rowString += row[j].render();
-            // }
-            // rowString += '</tr>';
             rows.push(squareRow);
         }
         return (
-            <table>
+            <table className='Board'>
                 <tbody>
                     {rows}
                 </tbody>

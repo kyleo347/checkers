@@ -18,6 +18,22 @@
   font-size: large;
 }
 
+.Square{
+  float: left;
+  height: 50px;
+  width: 50px;
+}
+
+.black{
+  background-color: black;
+} 
+
+.selectable{
+  box-shadow: 3px 3px 15px #666;
+  border-color:#C76C0C;  
+  opacity:0.5;
+}
+
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
