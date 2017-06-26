@@ -30,7 +30,7 @@
 
 .selectable{
   box-shadow: 3px 3px 15px #666;
-  border-color:#C76C0C;  
+  background-color:#C76C0C;  
   opacity:0.5;
 }
 
