@@ -34,32 +34,46 @@ class Square extends Component {
             </div>
         );
     }
+    
+    static flip() {
+        let oldRed = Square.red;
+        let oldBlack = Square.black;
+        Square.red = oldBlack;
+        Square.black = oldRed;
+    }
 }
 
 
 class Board extends Component {
     
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         //set methods
         this.selectSquare = this.selectSquare.bind(this);
+        this.clearSelectable = this.clearSelectable.bind(this);
         this.updateSelectable = this.updateSelectable.bind(this);
         this.updateSelectableDirection = this.updateSelectableDirection.bind(this);
         this.movePiece = this.movePiece.bind(this);
         
         //initialize board
+        let n;
+        if (this.props.n) {
+            n = this.props.n;
+        } else {
+            n = 8;
+        }
         let boardData = [];
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < n; i++) {
             let row = [];
             // this.selectable.push([]);
-            for (let j = 0; j < 8; j++) {
+            for (let j = 0; j < n; j++) {
                 // this.selectable[i].push(false);
                 let value;
                 if ((i + j) % 2 === 0) { //black square
                     value = Square.invalid;
-                } else if (i < 3) { //red Piece
+                } else if (i < Math.ceil(n/3)) { 
                     value = Square.black;
-                } else if (i > 4) { //black piece
+                } else if (i >= Math.floor(2*n/3)) {
                     value = Square.red;
                 } else { //empty white square
                     value = Square.empty;
@@ -78,22 +92,40 @@ class Board extends Component {
         this.state = {
             data : boardData,
             activePiece: undefined ,
-            turn : Square.red  //red goes first
+            turn : Square.red,  //red goes first
+            n : n
         };
         
     }
     
-    movePiece(square){
+    clearSelectable() {
+        this.setState((state) => {
+            for (let row in state.data) {
+                for (let column in state.data[row]) {
+                    state.data[row][column].selectable = false;
+                }
+            }
+            state.activePiece = undefined;
+        });
+    }
+    
+    movePiece(square) {
         let oldRow = this.state.activePiece.props.row;
         let oldCol = this.state.activePiece.props.column;
         let newRow = square.props.row;
         let newCol = square.props.column;
+        let king = this.state.activePiece.props.king;
         let boardData = this.state.data.slice();
+        let newSquare;
+
+        if ((newRow + this.state.activePiece.props.value == this.state.n) || newRow + this.state.activePiece.props.value == -1) {
+            king = true;
+        }
 
         boardData[newRow][newCol] = { //move piece
             value: boardData[oldRow][oldCol].value,
             selectable: false,
-            king: boardData[oldRow][oldCol].king
+            king: king
         }
 
         boardData[oldRow][oldCol] = { //remove piece  from old spot
@@ -105,60 +137,81 @@ class Board extends Component {
             boardData[(oldRow + newRow) / 2][(oldCol + newCol) / 2] = {
                 value: Square.empty,
                 selectable: false,
-                king: false
+                king: king
             }
-        }
-        this.setState({
-            turn: this.state.turn * -1,
-            data: boardData
-        });
+
+            //logic for double jumping
+            newSquare = <Square value={boardData[newRow][newCol].value}
+                        king={boardData[newRow][newCol].king} 
+                        selectable={boardData[newRow][newCol].selectable}
+                        row={newRow} 
+                        column={newCol} 
+                        onClick={this.selectSquare}></Square>
+            this.setState({
+                data: boardData,
+                activePiece: newSquare
+            }, () => {
+                let square = this.state.activePiece;
+                this.clearSelectable();
+                this.updateSelectable(square, true);
+                setTimeout(() => {
+                    if (this.state.activePiece) {
+                        this.setState({
+                            turn: this.state.activePiece.props.value * -1
+                        })
+                    }
+                    this.clearSelectable();
+                }, 1000);
+            });
 
         }
-            
-    selectSquare(e,square){
-        if (this.state.activePiece) {
-            if (square.props.selectable) {
-                if (this.state.data[square.props.row][square.props.column].selectable) {
-                    this.movePiece(square);
-                    //= this.state.turn * -1;
-                    // return;
-                }
-            }
-            //leave selectable mode
-            this.setState((state) => {
-                for (let row in state.data) {
-                    for (let column in state.data[row]) {
-                        state.data[row][column].selectable = false;
-                    }
-                }
+        else {
+            this.setState({
+                turn: this.state.turn * -1,
+                data: boardData
             });
-            this.state.activePiece = undefined;
+            this.clearSelectable();
+        }
+
+    }
+            
+    selectSquare(e, square) {
+        if (this.state.activePiece) {
+            if (square.props.selectable && this.state.data[square.props.row][square.props.column].selectable) {
+                this.movePiece(square);
+                //= this.state.turn * -1;
+                // return;
+            }
+            else {
+                this.clearSelectable();
+                // this.state.activePiece = undefined;
+            }
         }
         else {
             if (this.state.turn == square.props.value) {
                 this.updateSelectable(square);
             }
         }
-        }
+    }
     
-    updateSelectable(square) {
+    updateSelectable(square, jumpOnly=false) {
         this.setState({
             activePiece: square
         }, () => {
-            this.updateSelectableDirection(this.state.activePiece.props.value);
+            this.updateSelectableDirection(this.state.activePiece.props.value, jumpOnly);
             if (this.state.activePiece.props.king) {
-                this.updateSelectableDirection(this.state.activePiece.props.value * -1);
+                this.updateSelectableDirection(this.state.activePiece.props.value * -1, jumpOnly);
             }
         });
     }
     
-    updateSelectableDirection(direction) {
+    updateSelectableDirection(direction, jumpOnly = false) {
         let row = this.state.activePiece.props.row;
         let column = this.state.activePiece.props.column;
         let boardData = this.state.data.slice();
         if (boardData[row + direction]) {
             if (boardData[row + direction][column - 1]) {
-                if (boardData[row + direction][column - 1].value == Square.empty) { //Target spot is available
+                if (boardData[row + direction][column - 1].value == Square.empty && !jumpOnly) { //Target spot is available
                     boardData[row + direction][column - 1].selectable = true;
                 }
                 else if (boardData[row + direction][column - 1].value == this.state.activePiece.props.value * -1) { //target spot is populated by opposite color
@@ -173,7 +226,7 @@ class Board extends Component {
                 }
             }
             if (boardData[row + direction][column + 1]) {
-                if (boardData[row + direction][column + 1].value == Square.empty) {
+                if (boardData[row + direction][column + 1].value == Square.empty && !jumpOnly) {
                     boardData[row + direction][column + 1].selectable = true;
                 }
                 else if (boardData[row + direction][column + 1].value == this.state.activePiece.props.value * -1) {
@@ -191,7 +244,7 @@ class Board extends Component {
         this.setState({
             data: boardData
         });
-        }
+    }
     
     render() {
         let rows = [];
