@@ -58,3 +58,7 @@
 .App-header li a:hover {
     background-color: #111;
 }
+
+div table {
+  margin:auto;
+}

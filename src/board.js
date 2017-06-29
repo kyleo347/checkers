@@ -4,6 +4,8 @@ import React, {
 from 'react';
 import redpiece from "../img/red.jpg";
 import blackpiece from "../img/black.jpg";
+import redKing from "../img/redKing.jpg";
+import blackKing from "../img/blackKing.jpg";
 
 class Square extends Component {
         static red = -1;
@@ -24,10 +26,10 @@ class Square extends Component {
         if (this.props.selectable) className += ' selectable';
         if (this.props.value === Square.invalid) className += ' black'; 
         if(this.props.value === Square.red){
-            return(<img src={redpiece} className={className} onClick={this.onClick}/>)
+            return(<img src={this.props.king ? redKing : redpiece} className={className} onClick={this.onClick}/>)
         }
         if(this.props.value === Square.black){
-            return(<img src={blackpiece} className={className} onClick={this.onClick}/>)
+            return(<img src={this.props.king ? blackKing : blackpiece} className={className} onClick={this.onClick}/>)
         }
         return (
             <div className={className} onClick={this.onClick}>
@@ -268,11 +270,16 @@ class Board extends Component {
             rows.push(squareRow);
         }
         return (
+        <div>
+            <div>
+                <h1>Turn: {this.state.turn == Square.red ? 'Red' : 'Black'}</h1>
+            </div>
             <table className='Board'>
                 <tbody>
                     {rows}
                 </tbody>
-        </table>
+            </table>
+        </div>
         );
     }
 }
